@@ -4,7 +4,7 @@ The solution for this flag is very similar to [Model E1337 - Rolling Code Lock](
 
 ## Preamble
 
-the source code of the PRNG can be found by appending ```/rng``` to the URL.
+The source code of the PRNG can be found by appending ```/rng``` to the URL.
 Just like Model E1337 - Rolling Code Lock, the ```getrandbit``` function can be defined as
 
 ```python
