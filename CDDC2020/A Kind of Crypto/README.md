@@ -6,13 +6,13 @@ Presumably the goal is to decrypt `enc.txt`, which is encrypted with a different
 
 ## Solution
 
-There are two points $`Q`$ and $`P`$ defined on a Elliptic Curve $`E`$. From a seed $`s`$, it computes $`r = sQ`$ and a new seed $`sP`$ to be used in the next iteration. The sequence of $`r`$s generated are used to encrypt the plaintext by bit-wise xoring. However, each time only the $`30 \times 8`$ LSB of $`r`$ are used to decrypt a 30 byte chunk of plaintext each time. `partial_plaintext.txt` hence contain plaintext of the 7th chunk and the first 3 bytes of the 8th chunk.
+There are two points `Q` and `P` defined on a Elliptic Curve `E`. From a seed `s`, it computes `r = sQ` and a new seed `sP` to be used in the next iteration. The sequence of `r`s generated are used to encrypt the plaintext by bit-wise xoring. However, each time only the `30 * 8` LSB of `r` are used to decrypt a 30 byte chunk of plaintext each time. `partial_plaintext.txt` hence contain plaintext of the 7th chunk and the first 3 bytes of the 8th chunk.
 
-We can recover $`r`$ from `partial_plaintext.txt` with ease simply by bit-wise xoring. However, there are 16 bits of $`r`$ that seem to be lost during the encryption process. Fortunately $`2^{16} = 65536`$ is a pretty small number to bruteforce so we can recover the whole $`r`$ no problem.
+We can recover `r` from `partial_plaintext.txt` with ease simply by bit-wise xoring. However, there are 16 bits of `r` that seem to be lost during the encryption process. Fortunately `2**16 = 65536` is a pretty small number to bruteforce so we can recover the whole `r` no problem.
 
-Recovering $`s`$ via $`r = sQ`$ is a little more challenging. In a proper implementation this would be impossible except via bruteforce due to the [Discrete Logarithm Problem](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography). This turns out to be impractical with this challenge (I tried). However, in the event that the order of the curve is equal to the order of the finite field, i.e. equal to the prime used in `code.py`, there is something called the [Smart's Attack](https://wstein.org/edu/2010/414/projects/novotney.pdf) that enables recovering of $`s`$ from $`r = sQ`$ in linear time. An implementation of Smart's Attack can be found in the Python library [ecpy](https://github.com/elliptic-shiho/ecpy).
+Recovering `s` via `r = sQ` is a little more challenging. In a proper implementation this would be impossible except via bruteforce due to the [Discrete Logarithm Problem](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography). This turns out to be impractical with this challenge (I tried). However, in the event that the order of the curve is equal to the order of the finite field, i.e. equal to the prime used in `code.py`, there is something called the [Smart's Attack](https://wstein.org/edu/2010/414/projects/novotney.pdf) that enables recovering of `s` from `r = sQ` in linear time. An implementation of Smart's Attack can be found in the Python library [ecpy](https://github.com/elliptic-shiho/ecpy).
 
-Now, we can directly apply Smart's Attack to recover $`s`$. However, remember that we have to bruteforce a maximum of 65536 different $`r`$. It proves to be slow to apply Smart's Attack that many time. We can get around this by computing a value $`e`$ where $`eQ = P`$, which requires one application of Smart's Attack, and then $`s'`$ for the next iteration can simply be calculated as $`s' = sP = s \times eQ = e \times sQ = e \times r`$. We can then use this new $`s'`$ to decrypt the first 3 bytes of the 8th chunk and compare it with that in `partial_plaintext.txt`.
+Now, we can directly apply Smart's Attack to recover `s`. However, remember that we have to bruteforce a maximum of 65536 different `r`. It proves to be slow to apply Smart's Attack that many time. We can get around this by computing a value `e` where `eQ = P`, which requires one application of Smart's Attack, and then `s'` for the next iteration can simply be calculated as `s' = sP = s * eQ = e * sQ = e * r`. We can then use this new `s'` to decrypt the first 3 bytes of the 8th chunk and compare it with that in `partial_plaintext.txt`.
 
 ```python
 from ecpy import * # https://github.com/elliptic-shiho/ecpy
@@ -78,7 +78,7 @@ for i, r in get_r(pt30, ct30, r30):
 # >>> 60359
 ```
 
-Alright! So we've found both $`r`$ and $`s'`$! We can simply feed $`s'`$ as a seed into the decryption function in `code.py` to decrypt everything from the 8th chunk onwards!
+Alright! So we've found both `r` and `s'`! We can simply feed `s'` as a seed into the decryption function in `code.py` to decrypt everything from the 8th chunk onwards!
 
 ```python
 from code import *
@@ -95,7 +95,7 @@ print(s.decryption(ct[60:]).decode('utf-8'))
 
 ## Beyond: Recovering the whole message and the original seed used
 
-I wondered whether there could be some wacky secret message the author placed in the other parts of the encrypted message, and maybe in the seed? Good thing is, from here, all we gotta do is apply Smart's Attack 7 more times to recover the original seed! However, at every iteration, there are two solutions for $`s`$, namely $`s`$ and $`p-s`$, where $`p`$ is the modulo of the finite field, which isn't a problem, just bruteforce all solutions!
+I wondered whether there could be some wacky secret message the author placed in the other parts of the encrypted message, and maybe in the seed? Good thing is, from here, all we gotta do is apply Smart's Attack 7 more times to recover the original seed! However, at every iteration, there are two solutions for `s`, namely `s` and `p-s`, where `p` is the modulo of the finite field, which isn't a problem, just bruteforce all solutions!
 
 ```python
 s1 = s2
