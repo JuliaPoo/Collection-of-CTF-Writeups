@@ -6,4 +6,4 @@
 
 # CDDC 2020
 
-[A New Kind of Crypto](https://github.com/JuliaPoo/Collection-of-CTF-Writeups/blob/master/CDDC2020/A%20Kind%20of%20Crypto)
+[A Kind of Crypto](https://github.com/JuliaPoo/Collection-of-CTF-Writeups/blob/master/CDDC2020/A%20Kind%20of%20Crypto)
