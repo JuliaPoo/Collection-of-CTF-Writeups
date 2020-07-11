@@ -78,7 +78,7 @@ for i, r in get_r(pt30, ct30, r30):
 # >>> 60359
 ```
 
-Alright! So we've found both `r` and `s'`! We can simply feed `s'` as a seed into the decryption function in `code.py` to decrypt everything from the 8th chunk onwards!
+Alright! So we've found both `r` and `s'`! We can simply feed `s'` as a seed into the decryption function in `code.py` to decrypt everything from the 9th chunk onwards!
 
 ```python
 from code import *
@@ -95,7 +95,7 @@ print(s.decryption(ct[60:]).decode('utf-8'))
 
 ## Beyond: Recovering the whole message and the original seed used
 
-I wondered whether there could be some funny secret message the author placed in the other parts of the encrypted message, and maybe in the seed? Good thing is, from here, all we gotta do is apply Smart's Attack 7 more times to recover the original seed. However, at every iteration, there are two solutions for `s`, namely `s` and `p-s`, where `p` is the modulo of the finite field, which isn't a problem, just bruteforce all solutions.
+I wondered whether there could be some funny secret message the author placed in the other parts of the encrypted message, and maybe in the seed? Good thing is, from here, all we gotta do is apply Smart's Attack 9 more times to recover the original seed. However, at every iteration, there are two solutions for `s`, namely `s` and `p-s`, where `p` is the modulo of the finite field, which isn't a problem, just bruteforce all solutions.
 
 ```python
 s1 = s2
