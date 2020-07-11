@@ -1,0 +1,4 @@
+$ cat secret.txt | cut -c 211-243
+been done and we are seeing extre
+
+
