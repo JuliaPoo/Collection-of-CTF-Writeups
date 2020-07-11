@@ -1,6 +1,6 @@
 # The Challenge
 
-You are given `code.py` which encrypts some text with ECC, `enc.txt` which presumably contains the encrypted text. In addition, there is `partial_plaintext.txt` which contains known plaintext from index 210 to 242 and an image `partial_plaintext.png` that contains more segments of known plaintext. I ended up not using `partial_plaintext.png` so I'm not sure why it was included. These files are included in the folder [Challenge Files](\Challenge Files).
+You are given `code.py` which encrypts some text with ECC, `enc.txt` which presumably contains the encrypted text. In addition, there is `partial_plaintext.txt` which contains known plaintext from index 210 to 242 and an image `partial_plaintext.png` that contains more segments of known plaintext. I ended up not using `partial_plaintext.png` so I'm not sure why it was included. These files are included in the folder [Challenge Files](https://github.com/JuliaPoo/Collection-of-CTF-Writeups/edit/master/CDDC2020/A%20Kind%20of%20Crypto/Challenge%20Files).
 
 Presumably the goal is to decrypt `enc.txt`, which is encrypted with a different seed than given in `code.py`.
 
