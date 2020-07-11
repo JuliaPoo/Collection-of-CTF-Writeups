@@ -95,7 +95,7 @@ print(s.decryption(ct[60:]).decode('utf-8'))
 
 ## Beyond: Recovering the whole message and the original seed used
 
-I wondered whether there could be some wacky secret message the author placed in the other parts of the encrypted message, and maybe in the seed? Good thing is, from here, all we gotta do is apply Smart's Attack 7 more times to recover the original seed! However, at every iteration, there are two solutions for `s`, namely `s` and `p-s`, where `p` is the modulo of the finite field, which isn't a problem, just bruteforce all solutions!
+I wondered whether there could be some funny secret message the author placed in the other parts of the encrypted message, and maybe in the seed? Good thing is, from here, all we gotta do is apply Smart's Attack 7 more times to recover the original seed. However, at every iteration, there are two solutions for `s`, namely `s` and `p-s`, where `p` is the modulo of the finite field, which isn't a problem, just bruteforce all solutions.
 
 ```python
 s1 = s2
