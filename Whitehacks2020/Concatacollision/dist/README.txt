@@ -1,0 +1,3 @@
+To print the flag, looks like we need a 2FA token to verify. Although we have no token, our engineers have managed to secure the code of the checking server. I'm sure the check function isn't as secure as they think...
+
+nc whitehacks.ctf.sg 10001

@@ -1,9 +1,25 @@
-# Hacker101 Writeups
+# Writeups
 
-[Model E1337 - Rolling Code Lock: 2/2](https://github.com/JuliaPoo/Collection-of-CTF-Writeups/blob/master/Hacker101/Model%20E1337%20-%20Rolling%20Code%20Lock)
+I don't write writeups of everything I solved, only those at which I found interesting, which is heavily biased towards Crypto.
 
-[Model E1337 v2 - Hardened Rolling Code Lock 1/1](https://github.com/JuliaPoo/Collection-of-CTF-Writeups/blob/master/Hacker101/Model%20E1337%20v2%20-%20Hardened%20Rolling%20Code%20Lock)
+## Hacker101 Writeups
 
-# CDDC 2020
+| Name | Category |
+| ---- | -------- |
+| [Model E1337 - Rolling Code Lock: 2/2](./Hacker101/Model_E1337_-_Rolling_Code_Lock) | Crypto |
+| [Model E1337 v2 - Hardened Rolling Code Lock 1/1](./Hacker101/Model_E1337_v2_-_Hardened_Rolling_Code_Lock) | Crypto |
 
-[A Kind of Crypto](https://github.com/JuliaPoo/Collection-of-CTF-Writeups/blob/master/CDDC2020/A%20Kind%20of%20Crypto)
+
+## CDDC 2020
+
+| Name | Category |
+| ---- | -------- |
+| [A Kind of Crypto](./CDDC2020/A_Kind_of_Crypto) | Crypto |
+
+## Whitehacks 2020
+
+I did not participate in Whitehacks 2020. I was bored and did a challenge.
+
+| Name | Category |
+| ---- | -------- |
+| []
