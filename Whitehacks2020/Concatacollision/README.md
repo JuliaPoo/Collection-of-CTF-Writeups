@@ -51,7 +51,7 @@ check = lambda s: int(str(int(str(x1) + str(s)) % x0) + str(s)) % x1
 
 p = len(str(x0*x1))
 s = pow(x0,-1,x1)*x0 - pow(x1,-1,x0)*x1*x1*10**p
-s %= (x0*x1)
+s %= x0*x1
 
 assert check(s)==1, len(s)==p-1
 print(s)
