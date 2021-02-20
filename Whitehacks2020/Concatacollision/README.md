@@ -25,7 +25,7 @@ s == 1 - a  * 10^p  mod x1
 
 s == (1 - a*10^p)*modinv(x0,x1)*x0 + (a - x1*10^p)*modinv(x1,x0)*x1
   == a * (modinv(x1,x0)*x1 - modinv(x0,x1)*x0*10^p) 
-    + (modinv(x0,x1)*x0 - modinv(x1,x0)*x1*x1*10^p)
+       + (modinv(x0,x1)*x0 - modinv(x1,x0)*x1*x1*10^p)
   == a * N + K  mod x0*x1
 ```
 
