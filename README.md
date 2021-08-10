@@ -23,3 +23,14 @@ I did not participate in Whitehacks 2020. I was bored and did a challenge.
 | Name | Category |
 | ---- | -------- |
 | [Concatacollision](./Whitehacks2020/Concatacollision) | Crypto |
+
+## RARCTF 2021
+
+Awww wished i spent more time on this CTF. Eitherways had a really fun run with CTF.SG
+
+| Name | Category |
+| ---- | -------- |
+| [A3S](./RARCTF-2021/A3S) | Crypto |
+| randompad | Crypto |
+| PsychECC | Crypto |
+| rotoRSA | Crypto |
