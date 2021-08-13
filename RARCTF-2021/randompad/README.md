@@ -189,7 +189,7 @@ print("Flag:", flag.decode())
 # > Flag: rarctf{but-th3y_t0ld_m3_th1s_p4dd1ng_w45-s3cur3!!}
 ```
 
-The full solve script can be found in [sol\sol.sage](sol\sol.sage).
+The full solve script can be found in [sol/sol.sage](sol/sol.sage).
 
 
 
