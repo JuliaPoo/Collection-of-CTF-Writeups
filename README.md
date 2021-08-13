@@ -31,6 +31,6 @@ Awww wished i spent more time on this CTF. Eitherways had a really fun run with 
 | Name | Category |
 | ---- | -------- |
 | [A3S](./RARCTF-2021/A3S) | Crypto |
-| randompad | Crypto |
+| [randompad](./RARCTF-2021/randompad) | Crypto |
 | PsychECC | Crypto |
 | rotoRSA | Crypto |
