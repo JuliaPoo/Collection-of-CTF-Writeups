@@ -634,7 +634,6 @@ hsh = sha512(key_recovered).digest()
 flag = byte_xor(hsh, enc_flag)
 print(flag.decode())
 
-
 # > 0ccd69448c6318f2
 # > rarctf{5t0p_Pos71n9!_4b0ut_4m0NG_U5!!_17's_n0t_7uNN7_3b9cc8e124}
 ```

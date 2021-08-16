@@ -1,4 +1,5 @@
 import time
+import numpy as np
 t = time.time()
 
 import mini as orig # Import challenge code
@@ -394,7 +395,7 @@ for i in range(12): # Try all 12 possible substitutions
     l,r = build_solve_mat(a,b)
     try:
         key_recovered = l.solve_right(r)
-        print("kr found! ^-^")
+        print("[*] kr found! ^-^")
         break
     except: # Crashes if l.solve_right has no solutions
         pass
@@ -405,11 +406,11 @@ assert len(l.right_kernel().basis()) == 0, "Not the only solution!"
 key_recovered = [int(i) for i in key_recovered]
 key_recovered = tyt_to_int(tuple(tuple(key_recovered[i*3:i*3+3]) for i in range(15)))
 key_recovered = int_to_byt(key_recovered)
-print("Original Key:", key_recovered.hex())
+print("[*] Original Key:", key_recovered.hex())
 
 from hashlib import sha512
 
 hsh = sha512(key_recovered).digest()
 flag = byte_xor(hsh, enc_flag)
-print("Flag:", flag.decode())
-print("Time taken: %ds"%(time.time()-t))
+print("[*] Flag:", flag.decode())
+print("[*] Time taken: %ds"%(time.time()-t))
