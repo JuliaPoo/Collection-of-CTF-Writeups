@@ -324,7 +324,11 @@ def gen_mat(checkpoint):
         ct = ptmat*pt + ptconst + kptmat*kr
     """
     
+    # pt and kr are symbolic
     ctt = forward_to_checkpoint(pt, kr, checkpoint)
+
+    # Create the matrix from resulting
+    # symbolic equation
     ptmat = []
     kptmat = []
     ptconst = []
@@ -351,3 +355,117 @@ def gen_mat(checkpoint):
 
 ### Checkpoint 0
 
+Here's the plan:
+
+1. Partially encrypt two `pt` using our affine model up till checkpoint 0 and take the difference
+2. Guess a tryte of the last round key `last_key` (27 possibilities)
+3. Using said tryte, partially decrypt a tryte from each of the two corresponding `ct` using the original A3S up till checkpoint 0 and take the difference
+4. If the guess of the `last_key` tryte is correct, there is a higher chance that the output of step `3` matches the corresponding tryte of the output of step `1`.
+5. Repeat steps `1` to `4` for all possible guesses of said tryte.
+6. Repeat steps `1` to `5` for more `pt` and `ct` pairs until it becomes clear which tryte guess is the correct tryte
+7. Repeat steps `1` to `6` for every tryte of `last_key` until you've recovered the whole of `last_key` (9 trytes)
+
+Why it works:
+
+Using the affine model for step `1`, the difference will not be affected by `kr`. Let the 2 plaintexts be `pt1, pt2`:
+
+```
+step1(pt1, pt2) = ptmat*pt1 + ptconst + kptmat*kr - (ptmat*pt2 + ptconst + kptmat*kr)
+                = ptmat*(pt1 - pt2) -- EQN 1
+```
+
+`ptmat` is a constant and hence step 1 output is independent of `kr`.
+
+Now, if for step `3`, we were to use the affine model to partially decrypt, and take the difference, we'd have the output of step `3` independent of `last_key`. But this partial decryption goes through SBOX too, and the SBOX of the original A3S isn't completely affine! This means that our choice of `last_key` does affect the output of step `3`! You can think of this as "leaking" information of the `last_key`.
+
+Now why should expect `step1(pt1, pt2) == step3(ct1, ct2)` to hold true at a higher probability if `last_key` is correctly guessed? That's because if `step1` is done with the original A3S instead of our affine model (with the correct `kr`), the equality should _always_ hold. For our affine model however, it should hold with a somewhat higher probability, but with the added benefit of **not being dependent on `kr`**. This means we can guess the value of `last_key` independently of the rest of `kr`. In addition, we can guess `last_key` tryte by tryte, requiring only `27*9` guesses per known `pt1-pt2, ct1-ct2` pair.
+
+Here's the implementation:
+
+```python
+# Calculate `ptmat`
+ptmat, _, _ = gen_mat(0)
+# Encrypt all known pt up till checkpoint 0
+spt = ptmat * matrix(F, server_ptv).T
+spt = spt.T
+
+# Collect 3^9*8 pt differences
+# Offsets used are just powers of 3
+# No reason for it, it just looks nice
+dspt = []
+for offset in [1,3,9,27,81,243,729,2187]:
+    dspt += [(spt[i]-spt[(i+offset)%3^9], (i,(i+offset)%3^9)) for i in range(3^9)]
+
+# An array of 9 dictionaries
+# > each element corresponds to each tryte of the last_key
+# > each element is a dictionary containing the "score" of each
+#   possible guess
+# > The higher the score the more probable the tryte is the 
+#   correct guess
+all_kscore = []
+
+for cidx in range(9): # enumerate all trytes of `last_key`
+
+    pidx = SHIFT_ROWS[cidx]
+    kscore = [0]*27
+    for dptidx in range(len(dspt)):
+
+        dpt,(i0,i1) = dspt[dptidx]
+        dct = (server_ct[i0], server_ct[i1])
+
+        c = (dct[0][cidx], dct[1][cidx])
+        p = tuple(dpt[pidx*3:pidx*3+3])
+
+        for k in range(27): # enumerate all tryte guesses
+ 
+            # Partial decrypt
+            kt = orig.int_to_tyt(k)[0]
+            ci = (orig.t_uxor(c[0],kt), orig.t_uxor(c[1],kt)) # unadd
+            ci = (ISBOX_TYT[ci[0]], ISBOX_TYT[ci[1]]) # unsub
+            ci = orig.t_uxor(ci[0], ci[1])
+
+            if ci == p: # if matches, add 1 to score
+                kscore[k] += 1
+
+        print(dptidx, end="\r")
+        
+    all_kscore.append(kscore)
+    print(cidx, 'done!')
+
+# Get the k with the highest scores as the last_key
+last_key = [int_to_tyt(all_kscore[i].index(max(all_kscore[i])))[0] for i in range(9)]
+last_key = [i for j in last_key for i in j]
+print(last_key)
+# > [2, 1, 1, 0, 1, 2, 2, 1, 2, 0, 1, 0, 1, 2, 1, 0, 0, 1, 1, 1, 0, 2, 1, 0, 1, 2, 0]
+```
+
+To be more confident that I've tried enough pt-ct pairs, I plotted the scores to see if the peaks are obvious:
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots(nrows=1, ncols=9)
+fig.set_figheight(5)
+fig.set_figwidth(20)
+for j,col in enumerate(ax):
+    col.axis('off')
+    col.set_title(str(j))
+    col.plot(np.array(all_kscore[j]))
+plt.show()
+```
+
+<p align="center">
+  <img  src="rsrc/checkpoint0_scores.png" alt="Plot of scores of checkpoint 0 analysis">
+</p>
+
+The peaks are pretty defined, so we can be confident that the recovered `last_key` is correct. And here we have `27` constraints!
+
+A side note, in regular AES, recovering the last round key like we have here would be enough to recover the original key as the expansion algorithm is reversible. However, in A3S, to support arbituary length keys, this is no longer possible. 
+
+To see why, the original key in this challenge is `3*3*5 = 45` trits. However, we only know `27` trits of information! That's not nearly enough to know the full original key!
+
+
+### Checkpoint 1
+
+// Yea this will take a while to write. Am gonna continue tmr
