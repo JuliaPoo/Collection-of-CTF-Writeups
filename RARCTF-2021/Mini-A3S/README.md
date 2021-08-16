@@ -9,7 +9,9 @@ We are also given `3^9` plaintext and ciphertext pairs, and we have to recover t
 
 ## Metadata
 
-// TODO
+So again I didn't solve this challenge during the CTF, but I really liked this challenge so here we are. This is by far the hardest CTF challenge I've solved so thanks for the great run!
+
+This writeup is _long_, it took me a while to write everything down.
 
 # Some A3S Background
 
@@ -274,6 +276,40 @@ for i in range(6,24):
 The second line is a little trickier. Notice the `sub` operation? It's affine `93%` of the time, but not _all_ the time. During the key expansion of the key for this challenge, `SBOX` is used a total of 12 times. This means there's around `12 * 8% ~ 1` instance where the constraint isn't linear.
 
 If we replace the `sub` operation with its affine counterpart, we'd generate around `36` constraints. However, we expect about one of the SBOX applications to differ from our affine approximation. Each time that happens, it invalidates `3` of our constraints. So we should expect about `33` valid linear constraints, we just don't know _which_ of the SBOX affine approximation is invalid. No matter, since there's only `12` SBOX applications, we can simply bruteforce which one wasn't valid if it exists.
+
+Creating the constraints:
+
+```python
+# Symbolically execute the 2nd line of the key expansion
+# and save the eqns
+xkey_eqns = []
+for i in range(5,25,5):
+    rcons = ((1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 2))
+    k  = [tuple(kr_v[(i-5)*9:(i-5)*9+9][j*3:j*3+3]) for j in range(3)]
+    l  = [tuple(kr_v[(i-1)*9:(i-1)*9+9][j*3:j*3+3]) for j in range(3)]
+    s = sub(rot_wrd(l))
+    k0 = T_xor(k, s)
+    k0 = (t_xor(k0[0], rcons[i // 5 - 1]),) + k0[1:]
+    k0 = [i for j in k0 for i in j]
+    k0 = [i-j for i,j in zip(k0,kr_v[i*9:i*9+9])]
+    xkey_eqns.extend(k0)
+
+# Create matrix from the eqns above
+xkey_mat2 = []
+xkey_const2 = []
+for k in xkey_eqns:
+    r = vector([0]*3*8*9)
+    s = 0
+    for v,c in k.dict().items():
+        if 1 not in v:
+            s -= c
+            continue
+        else:
+            vi = list(v).index(1)
+            r[vi - 9*3] += c
+    xkey_mat2.append(r)
+    xkey_const2.append(s)
+```
 
 This gives a total of about `135 + 33 = 168` linear constraints on `kr`, still about `48` constraints short of the `216` goal.
 
@@ -603,4 +639,4 @@ print(flag.decode())
 # > rarctf{5t0p_Pos71n9!_4b0ut_4m0NG_U5!!_17's_n0t_7uNN7_3b9cc8e124}
 ```
 
-
+The solve script for this challenge can be found in the [./sol](./sol) folder.
