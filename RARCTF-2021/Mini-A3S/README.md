@@ -371,7 +371,7 @@ Using the affine model for step `1`, the difference will not be affected by `kr`
 
 ```
 step1(pt1, pt2) = ptmat*pt1 + ptconst + kptmat*kr - (ptmat*pt2 + ptconst + kptmat*kr)
-                = ptmat*(pt1 - pt2) -- EQN 1
+                = ptmat*(pt1 - pt2)
 ```
 
 `ptmat` is a constant and hence step 1 output is independent of `kr`.
@@ -379,6 +379,8 @@ step1(pt1, pt2) = ptmat*pt1 + ptconst + kptmat*kr - (ptmat*pt2 + ptconst + kptma
 Now, if for step `3`, we were to use the affine model to partially decrypt, and take the difference, we'd have the output of step `3` independent of `last_key`. But this partial decryption goes through SBOX too, and the SBOX of the original A3S isn't completely affine! This means that our choice of `last_key` does affect the output of step `3`! You can think of this as "leaking" information of the `last_key`.
 
 Now why should expect `step1(pt1, pt2) == step3(ct1, ct2)` to hold true at a higher probability if `last_key` is correctly guessed? That's because if `step1` is done with the original A3S instead of our affine model (with the correct `kr`), the equality should _always_ hold. For our affine model however, it should hold with a somewhat higher probability, but with the added benefit of **not being dependent on `kr`**. This means we can guess the value of `last_key` independently of the rest of `kr`. In addition, we can guess `last_key` tryte by tryte, requiring only `27*9` guesses per known `pt1-pt2, ct1-ct2` pair.
+
+And since each tryte we try is independent of one another, each section of the A3S algorithm we are relying on to be affine is small, which means there's an _okay_ chance of our affine model behaving the same way as the original A3S.
 
 Here's the implementation:
 
@@ -468,4 +470,137 @@ To see why, the original key in this challenge is `3*3*5 = 45` trits. However, w
 
 ### Checkpoint 1
 
-// Yea this will take a while to write. Am gonna continue tmr
+We can recover `27` more constraints with checkpoint 1 with a similar, but way simpler, attack. The plan:
+
+1. Partially encrypt all known `pt` to checkpoint 1 with our affine model with `kr` be all `0`s.
+2. Assume our affine model output `A(pt)` is the same as original A3S and take `ct - A(pt)` 
+3. The most common value of each trit of `ct - A(pt)` will be equal to the corresponding trit of `M x kr` where `M` is a constant matrix.
+
+And boom! Another `27` constraints!
+
+Why it works:
+
+Remember how `ct = ptmat*pt + ptconst + kptmat*kr` with our affine model? If we encrypt `pt` with our affine model with `kr = 0`, we'd have.
+
+```
+A(pt) = ptmat*pt + ptconst + kptmat*0
+      = ptmat*pt + ptconst
+```
+
+At the same time, `ct` was encrypted with a none-zero `kr`! So:
+
+```
+ct = pt + last_key
+   = ptmat*pt + ptconst + kptmat*kr + last_key  // Assuming our affine model holds
+   = A(pt) + kptmat*kr + last_key
+
+M x kr = kptmat*kr + last_key
+       = ct - A(pt)
+```
+
+And there! We have `M x kr = <stuff we can compute>`. Of course this does not hold _all the time_. The affine model would hold _once in a while_ for certain trits in the equation. That's why we should take the most probable value for each trit in `ct - A(pt)`.
+
+Here's the implementation:
+
+```python
+ptmat, ptconst, kptmat = gen_mat(1)
+
+# Get all 3^9 values of ct-A(pt)
+spt = ptmat * matrix(F, server_ptv).T + matrix(F, [list(ptconst)]*3^9).T
+rhs_prob = matrix(F, server_ctv).T - spt
+
+# Get most probable trit
+# rhs = ct - A(pt)
+from collections import Counter
+rhs = [sorted(Counter(i).items(), key=lambda x:x[1])[-1][0] for i in rhs_prob]
+
+# Calculate M
+# M*kr = rhs should hold
+M = np.zeros((27,216))
+for i in range(27):
+    M[i][216-27+i] = 1
+M = matrix(F,M) + kptmat
+```
+
+## Putting all the constraints together
+
+At this point we have `168 + 27 + 27 = 222` constraints, `6` more constraints than we actually need. That's a good thing! It would be sorta a buffer in case more than `3` constraints were invalid in the key expansion as mentioned earlier. Having more constraints would also verify that whatever we are doing is indeed correct.
+
+Putting the constraints together:
+
+```python
+def build_solve_mat(xkey_mat2, xkey_const2):
+
+    """
+    Collate all linear constraints together.
+    > arguments corresponds to the constraints from the
+      key expansion that requires SBOX. We might need to
+      remove some of those constraints, hence they are placed
+      as arguments for easy modifications
+    """
+    
+    # Form the 54 constraints
+    
+    # 27 from knowing the last_key
+    a3s_lhs = [[0]*216 for _ in range(27)]
+    a3s_rhs = last_key.copy()
+    for i in range(27):
+        a3s_lhs[i][216-27+i] = 1
+        
+    # 27 from assuming the whole cipher is linear
+    a3s_lhs.extend(list(M))
+    a3s_rhs.extend(rhs)
+
+    # Combine with key expansion
+    
+    # From expansion that doesn't involve sbox
+    a3s_lhs.extend(list(xkey_mat1))
+    a3s_rhs.extend(list(xkey_const1))
+    
+    # From expansion that involves sbox (that might be wrong)
+    a3s_lhs.extend(list(xkey_mat2))
+    a3s_rhs.extend(list(xkey_const2))
+
+    a3s_lhs = matrix(F, a3s_lhs)
+    a3s_rhs = vector(F, a3s_rhs)
+    return a3s_lhs, a3s_rhs
+
+
+# Assume one sub wasnt affine in the key expansion
+for i in range(12): # Try all 12 possible substitutions
+    a = xkey_mat2.copy()
+    b = xkey_const2.copy()
+    a = [p for j,p in enumerate(a) if j not in range(i*3,i*3+3)]
+    b = [p for j,p in enumerate(b) if j not in range(i*3,i*3+3)]
+    l,r = build_solve_mat(a,b)
+    try:
+        key_recovered = l.solve_right(r)
+        print("kr found! ^-^")
+        break
+    except: # Crashes if l.solve_right has no solutions
+        pass
+    
+# Check if the equation l*kr = r has more than 1 solution
+assert len(l.right_kernel().basis()) == 0, "Not the only solution!"
+```
+
+Now that we have found `kr`, we can now recover the original key and decrypt the flag!
+
+```python
+key_recovered = [int(i) for i in key_recovered]
+key_recovered = tyt_to_int(tuple(tuple(key_recovered[i*3:i*3+3]) for i in range(15)))
+key_recovered = int_to_byt(key_recovered)
+print("Original Key:", key_recovered.hex())
+
+from hashlib import sha512
+
+hsh = sha512(key_recovered).digest()
+flag = byte_xor(hsh, enc_flag)
+print(flag.decode())
+
+
+# > 0ccd69448c6318f2
+# > rarctf{5t0p_Pos71n9!_4b0ut_4m0NG_U5!!_17's_n0t_7uNN7_3b9cc8e124}
+```
+
+
