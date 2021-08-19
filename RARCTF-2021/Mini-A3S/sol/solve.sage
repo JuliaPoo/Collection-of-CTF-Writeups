@@ -61,13 +61,6 @@ def sbox_affine(i:tuple):
         (1 + i[0]*0 + i[1]*2 + i[2]*2)
     )
 
-def unsbox_affine(i:tuple):
-    return (
-        (2 + i[0]*1 + i[1]*1 + i[2]*1),
-        (1 + i[0]*0 + i[1]*2 + i[2]*2),
-        (0 + i[0]*0 + i[1]*1 + i[2]*0)
-    )
-
 def expand(tyt):
     words   = tyt_to_wrd(tyt) 
     size    = len(words)
