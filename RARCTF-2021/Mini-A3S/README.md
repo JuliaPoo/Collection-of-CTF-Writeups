@@ -631,3 +631,9 @@ print(flag.decode())
 ```
 
 The solve script for this challenge can be found in the [./sol](./sol) folder.
+
+Out of curiousity, this is the final matrix plotted:
+
+![](./rsrc/solve_mat.png)
+
+You can really see `mix_columns` doing its job.
